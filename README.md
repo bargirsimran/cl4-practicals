@@ -184,4 +184,177 @@ hadoop fs -cat /matrix_output/part-r-00000
 
 ---
 
-> ✅ This `README.md` can be used directly on GitHub or any markdown-supported documentation tool.
+
+# Student Grades Calculation using Hadoop MapReduce
+
+This project demonstrates a simple **MapReduce** program written in **Java** using **Hadoop** to calculate grades of students based on their average marks.
+
+---
+
+## 📝 Input Format
+
+The input file should be structured as follows:
+
+```
+student_id subject marks
+```
+
+### Example (`students.txt`):
+```
+101 Math 80
+101 Science 70
+102 Math 60
+102 Science 90
+103 Math 50
+103 Science 40
+```
+
+---
+
+## 🎯 Objective
+
+- Compute the **average marks** of each student.
+- Assign a **grade** based on the average.
+
+### 🏷️ Grading Criteria
+
+- **A**: 85–100  
+- **B**: 70–84  
+- **C**: 50–69  
+- **D**: 35–49  
+- **F**: Below 35  
+
+---
+
+## 📁 Project Structure (Eclipse-style)
+
+```
+StudentGrades/
+├── src/
+│   ├── StudentGradeMapper.java
+│   ├── StudentGradeReducer.java
+│   └── StudentGradeDriver.java
+├── input/
+│   └── students.txt
+├── build/
+└── studentgrades.jar
+```
+
+---
+
+## 👨‍💻 Java Code
+
+### 🔹 StudentGradeMapper.java
+
+```java
+import java.io.IOException;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+
+public class StudentGradeMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        String[] parts = value.toString().split("\s+");
+        String studentId = parts[0];
+        int marks = Integer.parseInt(parts[2]);
+
+        context.write(new Text(studentId), new IntWritable(marks));
+    }
+}
+```
+
+### 🔹 StudentGradeReducer.java
+
+```java
+import java.io.IOException;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+
+public class StudentGradeReducer extends Reducer<Text, IntWritable, Text, Text> {
+    public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+        int total = 0;
+        int count = 0;
+
+        for (IntWritable val : values) {
+            total += val.get();
+            count++;
+        }
+
+        int avg = total / count;
+        String grade;
+
+        if (avg >= 85) grade = "A";
+        else if (avg >= 70) grade = "B";
+        else if (avg >= 50) grade = "C";
+        else if (avg >= 35) grade = "D";
+        else grade = "F";
+
+        context.write(key, new Text("Average: " + avg + ", Grade: " + grade));
+    }
+}
+```
+
+### 🔹 StudentGradeDriver.java
+
+```java
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.*;
+import org.apache.hadoop.mapreduce.lib.output.*;
+
+public class StudentGradeDriver {
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "Student Grades");
+
+        job.setJarByClass(StudentGradeDriver.class);
+        job.setMapperClass(StudentGradeMapper.class);
+        job.setReducerClass(StudentGradeReducer.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+```
+
+---
+
+## ⚙️ To Compile and Package
+
+```bash
+javac -classpath `hadoop classpath` -d build src/*.java
+jar -cvf studentgrades.jar -C build/ .
+```
+
+---
+
+## 🚀 Run on Hadoop
+
+```bash
+# Create HDFS directory and upload input
+hadoop fs -mkdir /grades
+hadoop fs -put students.txt /grades/
+
+# Run the MapReduce job
+hadoop jar studentgrades.jar StudentGradeDriver /grades /grades_output
+
+# View the results
+hadoop fs -cat /grades_output/part-r-00000
+```
+
+---
+
+## ✅ Output Example
+
+```
+101    Average: 75, Grade: B
+102    Average: 75, Grade: B
+103    Average: 45, Grade: D
+```
+
