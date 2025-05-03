@@ -56,18 +56,17 @@ public class MatrixMultiplyMapper extends Mapper<LongWritable, Text, Text, Text>
 }
 ________________________________________
 🔹 MatrixMultiplyReducer.java
+
+
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
-
 import java.io.IOException;
 import java.util.*;
-
 public class MatrixMultiplyReducer extends Reducer<Text, Text, Text, IntWritable> {
     public void reduce(Text key, Iterable<Text> values, Context context)
             throws IOException, InterruptedException {
         Map<Integer, Integer> amap = new HashMap<>();
         Map<Integer, Integer> bmap = new HashMap<>();
-
         for (Text val : values) {
             String[] tokens = val.toString().split(",");
             if (tokens[0].equals("A")) {
@@ -76,41 +75,37 @@ public class MatrixMultiplyReducer extends Reducer<Text, Text, Text, IntWritable
                 bmap.put(Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
             }
         }
-
         int sum = 0;
         for (int k : amap.keySet()) {
             if (bmap.containsKey(k)) {
                 sum += amap.get(k) * bmap.get(k);
             }
         }
-
         context.write(key, new IntWritable(sum));
     }
 }
+
 ________________________________________
 🔹 MatrixMultiplicationDriver.java
+
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.*;
 import org.apache.hadoop.mapreduce.lib.output.*;
-
 public class MatrixMultiplicationDriver {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "Matrix Multiplication");
-
         job.setJarByClass(MatrixMultiplicationDriver.class);
         job.setMapperClass(MatrixMultiplyMapper.class);
         job.setReducerClass(MatrixMultiplyReducer.class);
-
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-
         FileInputFormat.addInputPath(job, new Path(args[0])); // path to A and B combined
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
