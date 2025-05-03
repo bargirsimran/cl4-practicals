@@ -179,7 +179,7 @@ hadoop jar matrixmult.jar MatrixMultiplicationDriver /matrix /matrix_output
 ## 📥 Step 6: Check Output
 
 ```bash
-hadoop fs -cat /matrix_output/part-r-00000
+hadoop fs -cat /matrix_output/part-00000
 ```
 
 ---
@@ -345,7 +345,7 @@ hadoop fs -put students.txt /grades/
 hadoop jar studentgrades.jar StudentGradeDriver /grades /grades_output
 
 # View the results
-hadoop fs -cat /grades_output/part-r-00000
+hadoop fs -cat /grades_output/part-00000
 ```
 
 ---
