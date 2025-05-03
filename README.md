@@ -157,9 +157,10 @@ public class MatrixMultiplicationDriver {
 ## 🚀 Step 4: Compile and Package
 
 ```bash
-mkdir build
-javac -classpath `hadoop classpath` -d build src/*.java
+mkdir -p build
+javac -classpath "$(hadoop classpath)" -d build src/*.java
 jar -cvf matrixmult.jar -C build/ .
+.
 ```
 
 ---
