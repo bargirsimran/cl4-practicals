@@ -56,32 +56,52 @@ MatrixMultiplication/
 
 ## 👨‍💻 Step 3: Write Java Code
 
-### 🔹 MatrixMultiplyMapper.java
+### 🔹 MMDriver.java
 
 ```java
+
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-import java.io.IOException;
+public class MMDriver {
 
-public class MatrixMultiplyMapper extends Mapper<LongWritable, Text, Text, Text> {
-    public void map(LongWritable key, Text value, Context context)
-            throws IOException, InterruptedException {
-        String[] tokens = value.toString().split("\\s+");
-        String matrixName = tokens[0];
-        int i = Integer.parseInt(tokens[1]);
-        int j = Integer.parseInt(tokens[2]);
-        int val = Integer.parseInt(tokens[3]);
-
-        if (matrixName.equals("A")) {
-            for (int k = 0; k < 10; k++)  // assuming B has 10 columns
-                context.write(new Text(i + "," + k), new Text("A," + j + "," + val));
-        } else {
-            for (int k = 0; k < 10; k++)  // assuming A has 10 rows
-                context.write(new Text(k + "," + j), new Text("B," + i + "," + val));
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.err.println("Usage: MatrixMultiply <in_dir> <out_dir>");
+            System.exit(2);
         }
+        Configuration conf = new Configuration();
+        // M is an m-by-n matrix; N is an n-by-p matrix.
+        conf.set("m", "1000");
+        conf.set("n", "100");
+        conf.set("p", "1000");
+
+        Job job = new Job(conf, "MatrixMultiply");
+
+        job.setJarByClass(MMDriver.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+
+        job.setMapperClass(MMMap.class);
+        job.setReducerClass(MMReduce.class);
+
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        job.waitForCompletion(true);
     }
 }
+
+
 
 
 ```
